@@ -2,7 +2,7 @@
 	heap
 	This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
+
 
 use std::cmp::Ord;
 use std::default::Default;
@@ -23,7 +23,7 @@ where
     pub fn new(comparator: fn(&T, &T) -> bool) -> Self {
         Self {
             count: 0,
-            items: vec![T::default()],
+            items: vec![T::default()], // Placeholder at index 0
             comparator,
         }
     }
@@ -37,15 +37,24 @@ where
     }
 
     pub fn add(&mut self, value: T) {
-        //TODO
+        self.items.push(value);
+        self.count += 1;
+    
+        // Bubble up to maintain heap property
+        let mut idx = self.count;
+        while idx > 1 {
+            let parent_idx = self.parent_idx(idx); // Store parent index first
+            if (self.comparator)(&self.items[idx], &self.items[parent_idx]) {
+                self.items.swap(idx, parent_idx);
+                idx = parent_idx;
+            } else {
+                break;
+            }
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
         idx / 2
-    }
-
-    fn children_present(&self, idx: usize) -> bool {
-        self.left_child_idx(idx) <= self.count
     }
 
     fn left_child_idx(&self, idx: usize) -> usize {
@@ -56,9 +65,33 @@ where
         self.left_child_idx(idx) + 1
     }
 
+    fn children_present(&self, idx: usize) -> bool {
+        self.left_child_idx(idx) <= self.count
+    }
+
     fn smallest_child_idx(&self, idx: usize) -> usize {
-        //TODO
-		0
+        let left = self.left_child_idx(idx);
+        let right = self.right_child_idx(idx);
+
+        if right <= self.count && (self.comparator)(&self.items[right], &self.items[left]) {
+            right
+        } else {
+            left
+        }
+    }
+
+    fn bubble_down(&mut self, idx: usize) {
+        let mut idx = idx;
+        while self.children_present(idx) {
+            let child_idx = self.smallest_child_idx(idx);
+
+            if (self.comparator)(&self.items[child_idx], &self.items[idx]) {
+                self.items.swap(idx, child_idx);
+                idx = child_idx;
+            } else {
+                break;
+            }
+        }
     }
 }
 
@@ -84,8 +117,20 @@ where
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
-        //TODO
-		None
+        if self.is_empty() {
+            return None;
+        }
+
+        // The root element to return
+        let root = self.items.swap_remove(1);
+        self.count -= 1;
+
+        // Bubble down the new root to maintain heap property
+        if self.count > 0 {
+            self.bubble_down(1);
+        }
+
+        Some(root)
     }
 }
 
@@ -133,8 +178,10 @@ mod tests {
         assert_eq!(heap.next(), Some(2));
         assert_eq!(heap.next(), Some(4));
         assert_eq!(heap.next(), Some(9));
+        assert_eq!(heap.len(), 1); // Only one item left
         heap.add(1);
         assert_eq!(heap.next(), Some(1));
+        assert_eq!(heap.next(), Some(11));
     }
 
     #[test]
@@ -148,7 +195,9 @@ mod tests {
         assert_eq!(heap.next(), Some(11));
         assert_eq!(heap.next(), Some(9));
         assert_eq!(heap.next(), Some(4));
+        assert_eq!(heap.len(), 1); // Only one item left
         heap.add(1);
         assert_eq!(heap.next(), Some(2));
+        assert_eq!(heap.next(), Some(1));
     }
 }
